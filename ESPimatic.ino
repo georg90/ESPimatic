@@ -914,6 +914,8 @@ void handle_api()
   // Get vars for all commands
   String action = server.arg("action");
   String value = server.arg("value");
+  String protocol=server.arg("protocol");
+  String bitsstring=server.arg("bits");
   String api = server.arg("api");
   String EspimaticApi = HandleEeprom(espimaticapikey_Address, "read");
 
@@ -927,19 +929,59 @@ void handle_api()
 
   if (action == "ir")
   {
-    server.send ( 200, "text/html", "OK");
-    unsigned int ArrayKey[512];
-    char *tmp;
-    int i = 0;
-    tmp = strtok(&value[0], ",");
-    while (tmp)
-    {
-      ArrayKey[i++] = atoi(tmp);
-      tmp = strtok(NULL, ",");
+    String webOutput = "Protocol: "+protocol+"; Code: "+value+"; Bits: "+bitsstring;
+    Serial.println(webOutput);
+      
+    if ((value != "")&&(bitsstring != "")){
+      char tarray[15]; 
+      value.toCharArray(tarray, sizeof(tarray));
+      unsigned long code = strtoul(tarray,NULL,16); 
+      int bits = bitsstring.toInt();
+      Serial.println(code);
+      
+      if (protocol == "NEC"){
+        server.send(200, "text/html", webOutput);
+        irsend.sendNEC(code, bits);
+      }
+      else if (protocol == "Sony"){
+        server.send(200, "text/html", webOutput);
+        irsend.sendSony(code, bits);
+      }
+      else if (protocol == "Whynter"){
+        server.send(200, "text/html", webOutput);
+        irsend.sendWhynter(code, bits);
+      }
+      else if (protocol == "LG"){
+        server.send(200, "text/html", webOutput);
+        irsend.sendLG(code, bits);
+      }
+      else if (protocol == "RC5"){
+        server.send(200, "text/html", webOutput);
+        irsend.sendRC5(code, bits);
+      }
+      else if (protocol == "RC6"){
+        server.send(200, "text/html", webOutput);
+        irsend.sendRC6(code, bits);
+      }
+      else if (protocol == "DISH"){
+        server.send(200, "text/html", webOutput);
+        irsend.sendDISH(code, bits);
+      }
+      else if (protocol == "SharpRaw"){
+        server.send(200, "text/html", webOutput);
+        irsend.sendSharpRaw(code, bits);
+      }
+      else if (protocol == "Samsung"){
+        server.send(200, "text/html", webOutput);
+        irsend.sendSAMSUNG(code, bits);
+      }
+      else {
+        server.send(200, "text/html", "Protocol not implemented!");
+      }
     }
-
-    int SizeOfArr = sizeof(ArrayKey);
-    irsend.sendRaw(ArrayKey, 227, 38);
+    else {
+      server.send(200, "text/html", "Missing code or bits!");
+    }
   }
 
   if (action == "reboot" && value == "true")
